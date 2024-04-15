@@ -1,15 +1,2 @@
 .idea/
 .venv/
-__pycache__/
-*.py[cod]
-*.log
-*.env
-db.sqlite3
-*.swp
-*.bak
-*.so
-*.egg-info/
-dist/
-build/
-.DS_Store
-.devcontainer/
