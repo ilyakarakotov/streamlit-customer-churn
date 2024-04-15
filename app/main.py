@@ -1,13 +1,11 @@
 import pickle as pickle
 
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 from sklearn.impute import SimpleImputer
 import altair as alt
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
 
 
 def get_clean_data():
@@ -34,8 +32,6 @@ def get_clean_data():
 
     # one hot encode the data
     data = pd.get_dummies(data)
-
-    # st.write(data)
 
     return data, data_before_encoding
 
@@ -78,9 +74,11 @@ def add_sidebar(data, data_before_encoding):
         else:  # if the column is numerical
             selected_value = st.sidebar.slider(
                 label,
-                min_value=float(0),
-                max_value=float(data_before_encoding[key].max()),
-                value=float(data_before_encoding[key].mean()), key=key)
+                min_value=int(0),
+                max_value=int(data_before_encoding[key].max()),
+                value=int(data_before_encoding[key].mean()),
+                step=int(1),
+                key=key)
         input_dict[key] = [selected_value]  # Wrap the selected value in a list
 
     # Create a DataFrame from the input_dict
@@ -101,24 +99,6 @@ def add_sidebar(data, data_before_encoding):
 
     return encoded_input
 
-
-# def get_scaled_values(data):
-#     categories = ['tenure', 'MonthlyCharges', 'TotalCharges']
-#
-#     # Find mean values for churned and non-churned customers
-#     mean_values_churned = data[data['Churn'] == 1][categories].mean()
-#     mean_values_not_churned = data[data['Churn'] == 0][categories].mean()
-#
-#     # Normalize the data for each category
-#     for category in ['tenure', 'MonthlyCharges', 'TotalCharges']:
-#         max_value = data[category].max()
-#         min_value = data[category].min()
-#         range_value = max_value - min_value
-#
-#         mean_values_churned[category] = (mean_values_churned[category] - min_value) / range_value
-#         mean_values_not_churned[category] = (mean_values_not_churned[category] - min_value) / range_value
-#
-#     return mean_values_churned, mean_values_not_churned
 
 def get_altair_chart(data, input_data):
     # Group data by 'tenure' and count the number of churned customers in each group
@@ -219,7 +199,6 @@ def get_stacked_bar_charts(data):
 
         # converts columns to what percentage of the total each category represents, adding up to 100%
         prop_by_independent = pd.crosstab(data[column], data['Churn']).apply(lambda x: x / x.sum() * 100, axis=1)
-
         prop_by_independent.plot(kind='bar', ax=ax, stacked=True, rot=0, color=['#22bb45', '#ff4c4b'])
 
         # set the legend in the upper right corner
@@ -227,7 +206,6 @@ def get_stacked_bar_charts(data):
 
         # set title and labels
         ax.set_title('Proportion of observations by ' + column, fontsize=16, loc='left')
-
         ax.tick_params(rotation='auto')
 
         # remove frame from the plot
@@ -252,35 +230,41 @@ def main():
     data, data_before_encoding = get_clean_data()
 
     input_data = add_sidebar(data, data_before_encoding)
-    # st.write(input_data)
 
     with st.container():
         st.title("Churn Prediction App")
-        st.write(
-            "This app uses machine learning technique Logistic Regression to predict customer churn, so you can see if a customer is at high "
-            "risk of leaving your business. This information provides a chance for you to take steps to prevent the customer from leaving. "
-            "Multiple graphs are shown below to help you understand the data and the prediction that comes with the inputted customer information.")
-        st.write("")
-        st.write("")
-        st.write("")
-
     col1, col2 = st.columns([4, 1])  # first column will be 4 times wider than the second column
 
+    # initialization of graphs
+    altair_chart = get_altair_chart(data, input_data)
+    bar_charts = get_stacked_bar_charts(data)
+    correlation_matrix = get_correlation_matrix(data)
+
     with col1:
+        st.write(
+            "This app uses <span title='Logistic regression is a supervised machine learning algorithm used for "
+            "classification tasks where the goal is to predict the probability that an instance belongs to a given "
+            "class or not.'>Logistic Regression</span> to predict customer churn, so you can see if a customer "
+            "is at <span style='color:#ff4c4b;'>high risk</span> of leaving your business. This information grants "
+            "you an opportunity to take action in <span style='color:#22bb45;'>lowering risk</span> that a customer "
+            "leaves. Having customers for a longer time means that the customer lifetime value (CLV) may be increase, "
+            "<span style='color:#6591e7;'>boosting business</span> revenue.", unsafe_allow_html=True)
         st.write("")
-        st.write("The red line represents the number of churned customers over time, while the blue line represents the number of customers who did not churn."
-                 " To see where your customer falls in the data, adjust the tenure slider.")
         st.write("")
-        altair_chart = get_altair_chart(data, input_data)
+        st.write("")
+        st.write("The <span style='color:#ff4c4b;'>red line</span> represents the number of churned customers over "
+                 "time, while the <span style='color:#6591e7;'>blue line</span> represents the number of customers who "
+                 "did not churn. To see where <span style='color:#22bb45;'>your customer</span> falls in the data, "
+                 "adjust the tenure slider.", unsafe_allow_html=True)
+        st.write("")
+        st.write("")
         st.altair_chart(altair_chart, use_container_width=True)
 
     with col2:
         add_predictions(input_data)
         st.write("For more useful metrics, expand the graphs below 👇")
-        bar_charts = get_stacked_bar_charts(data)
-        st.pyplot(bar_charts)
 
-        correlation_matrix = get_correlation_matrix(data)
+        st.pyplot(bar_charts)
         st.pyplot(correlation_matrix)
 
 

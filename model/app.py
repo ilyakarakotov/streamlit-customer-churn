@@ -8,7 +8,6 @@ from sklearn.metrics import accuracy_score, classification_report
 import pickle as pickle
 
 
-
 def create_model(data):
     # split the data into X and y
     X = data.drop(['Churn'], axis=1)
@@ -29,14 +28,15 @@ def create_model(data):
 
     # test model
     y_pred = model.predict(X_test)
-    print("Accuracy of our model: ", accuracy_score(y_test, y_pred)) # y_test are the actual values, y_pred are the predicted values
+    print("Accuracy of our model: ",
+          accuracy_score(y_test, y_pred))  # y_test are the actual values, y_pred are the predicted values
     print("Classification report: \n", classification_report(y_test, y_pred))  # more in-depth information
 
     return model, scaler, X_train, X_test, y_train, y_test
 
 
 def get_clean_data():
-    data = pd.read_csv('../data/Telco-Customer-Churn.csv')
+    data = pd.read_csv('data/Telco-Customer-Churn.csv')
 
     # replace empty values with NaN
     data['TotalCharges'] = data['TotalCharges'].replace(' ', pd.NA)
@@ -81,8 +81,6 @@ def main():
         pickle.dump(y_train, file)
     with open('../model/y_test.pkl', 'wb') as file:
         pickle.dump(y_test, file)
-
-
 
 
 if __name__ == "__main__":
