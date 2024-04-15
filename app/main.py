@@ -242,7 +242,7 @@ def main():
 
     with col1:
         st.write(
-            "This app uses <span title='Logistic regression is a supervised machine learning algorithm used for "
+            "TEST This app uses <span title='Logistic regression is a supervised machine learning algorithm used for "
             "classification tasks where the goal is to predict the probability that an instance belongs to a given "
             "class or not.'>Logistic Regression</span> to predict customer churn, so you can see if a customer "
             "is at <span style='color:#ff4c4b;'>high risk</span> of leaving your business. This information grants "
