@@ -24,7 +24,6 @@ def create_model(data):
     )
 
     # train the model
-    # TODO RESEARCH: What is LogisticRegression?
     model = LogisticRegression()
     model.fit(X_train, y_train)
 
@@ -33,7 +32,7 @@ def create_model(data):
     print("Accuracy of our model: ", accuracy_score(y_test, y_pred)) # y_test are the actual values, y_pred are the predicted values
     print("Classification report: \n", classification_report(y_test, y_pred))  # more in-depth information
 
-    return model, scaler
+    return model, scaler, X_train, X_test, y_train, y_test
 
 
 def get_clean_data():
@@ -66,13 +65,22 @@ def get_clean_data():
 def main():
     data = get_clean_data()
 
-    model, scaler = create_model(data)
+    model, scaler, X_train, X_test, y_train, y_test = create_model(data)
 
     # wb = write binary
     with open('../model/model.pkl', 'wb') as file:
         pickle.dump(model, file)
     with open('../model/scaler.pkl', 'wb') as file:
         pickle.dump(scaler, file)
+    # Save the train-test split data
+    with open('../model/X_train.pkl', 'wb') as file:
+        pickle.dump(X_train, file)
+    with open('../model/X_test.pkl', 'wb') as file:
+        pickle.dump(X_test, file)
+    with open('../model/y_train.pkl', 'wb') as file:
+        pickle.dump(y_train, file)
+    with open('../model/y_test.pkl', 'wb') as file:
+        pickle.dump(y_test, file)
 
 
 

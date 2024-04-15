@@ -1,0 +1,19 @@
+.st-emotion-cache-j5r0tf {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: lightslategray;
+}
+
+.risk {
+    color: #ffffff;
+    padding: 0.2em .5rem;
+    border-radius: 0.5em;
+}
+
+.risk.low {
+    background-color: #22bb45;
+}
+
+.risk.high {
+    background-color: #ff4c4b;
+}

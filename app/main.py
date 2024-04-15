@@ -4,6 +4,10 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from sklearn.impute import SimpleImputer
+import altair as alt
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 
 
 def get_clean_data():
@@ -31,13 +35,13 @@ def get_clean_data():
     # one hot encode the data
     data = pd.get_dummies(data)
 
-    st.write(data)
+    # st.write(data)
 
     return data, data_before_encoding
 
 
 def add_sidebar(data, data_before_encoding):
-    st.sidebar.header("Customer Information")
+    st.sidebar.header("Customer Analysis")
 
     input_labels = [
         ('Gender', 'gender'),
@@ -70,6 +74,7 @@ def add_sidebar(data, data_before_encoding):
         elif key == 'SeniorCitizen':
             unique_values = ['No', 'Yes']
             selected_value = st.sidebar.selectbox(label, unique_values, key=key)
+            selected_value = 1 if selected_value == 'Yes' else 0
         else:  # if the column is numerical
             selected_value = st.sidebar.slider(
                 label,
@@ -97,55 +102,61 @@ def add_sidebar(data, data_before_encoding):
     return encoded_input
 
 
-def get_scaled_values(data):
-    categories = ['tenure', 'MonthlyCharges', 'TotalCharges']
+# def get_scaled_values(data):
+#     categories = ['tenure', 'MonthlyCharges', 'TotalCharges']
+#
+#     # Find mean values for churned and non-churned customers
+#     mean_values_churned = data[data['Churn'] == 1][categories].mean()
+#     mean_values_not_churned = data[data['Churn'] == 0][categories].mean()
+#
+#     # Normalize the data for each category
+#     for category in ['tenure', 'MonthlyCharges', 'TotalCharges']:
+#         max_value = data[category].max()
+#         min_value = data[category].min()
+#         range_value = max_value - min_value
+#
+#         mean_values_churned[category] = (mean_values_churned[category] - min_value) / range_value
+#         mean_values_not_churned[category] = (mean_values_not_churned[category] - min_value) / range_value
+#
+#     return mean_values_churned, mean_values_not_churned
 
-    # Find mean values for churned and non-churned customers
-    mean_values_churned = data[data['Churn'] == 1][categories].mean()
-    mean_values_not_churned = data[data['Churn'] == 0][categories].mean()
+def get_altair_chart(data, input_data):
+    # Group data by 'tenure' and count the number of churned customers in each group
+    churned_data = data[data['Churn'] == 1].groupby('tenure').size().reset_index(name='Churned')
+    not_churned_data = data[data['Churn'] == 0].groupby('tenure').size().reset_index(name='Churned')
 
-    # Normalize the data for each category
-    for category in ['tenure', 'MonthlyCharges', 'TotalCharges']:
-        max_value = data[category].max()
-        min_value = data[category].min()
-        range_value = max_value - min_value
+    # Create a selection that is active on the line chart
+    brush = alt.selection_interval(encodings=["x"])
 
-        mean_values_churned[category] = (mean_values_churned[category] - min_value) / range_value
-        mean_values_not_churned[category] = (mean_values_not_churned[category] - min_value) / range_value
-
-    return mean_values_churned, mean_values_not_churned
-
-
-def get_radar_chart(input_data, data):
-    # categories for the radar chart
-    categories = ['tenure', 'MonthlyCharges', 'TotalCharges']
-
-    mean_values_churned, mean_values_not_churned = get_scaled_values(data)
-
-    fig = go.Figure()
-
-    fig.add_trace(go.Scatterpolar(
-        r=mean_values_churned.tolist(),
-        theta=categories,
-        fill='toself',
-        name='Churned'
-    ))
-    fig.add_trace(go.Scatterpolar(
-        r=mean_values_not_churned.tolist(),
-        theta=categories,
-        fill='toself',
-        name='Not Churned'
-    ))
-    fig.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True,
-                range=[0, .75]
-            )),
-        showlegend=True
+    # Line chart of churned customers over time
+    churn_chart = alt.Chart(churned_data).mark_line(color='#ff4c4b').encode(
+        x=alt.X('tenure', title='Tenure (Months)'),
+        y='Churned'
+    ).properties(
+        width=550,
+        height=300
+    ).add_selection(
+        brush
     )
 
-    return fig
+    not_churn_chart = alt.Chart(not_churned_data).mark_line(color='#479ce2').encode(
+        x='tenure',
+        y='Churned'
+    ).properties(
+        width=550,
+        height=300
+    ).add_selection(
+        brush
+    )
+
+    # Add line at the place where customer information is chosen
+    customer_tenure_df = pd.DataFrame({'tenure': [input_data['tenure'].values[0]]})
+    customer_tenure_line = alt.Chart(customer_tenure_df).mark_rule(color='#22bb45').encode(x='tenure')
+
+    # Layer tenure line to be in the front
+    chart = alt.layer(churn_chart, not_churn_chart, customer_tenure_line)
+
+    return chart
 
 
 def add_predictions(input_data):
@@ -158,34 +169,119 @@ def add_predictions(input_data):
 
     prediction = model.predict(input_array_scaled)
 
-    st.write(prediction)
+    st.subheader("Churn Prediction")
+    st.write("Risk of customer churning:")
+    if prediction == 1:
+        st.write("<span class='risk high'>High</span>", unsafe_allow_html=True)
+    else:
+        st.write("<span class='risk low'>Low</span>", unsafe_allow_html=True)
+
+    st.write("The probability of customer churning is: ", model.predict_proba(input_array_scaled)[0][1])
+    st.write("The probability of customer not churning is: ", model.predict_proba(input_array_scaled)[0][0])
+
+
+def get_correlation_matrix(data):
+    # Select numerical columns
+    numerical_cols = ['tenure', 'MonthlyCharges', 'TotalCharges']
+
+    # Compute correlation matrix
+    corr_matrix = data[numerical_cols].corr()
+
+    # Create a heatmap
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.1)
+    plt.title('Correlation Matrix')
+
+    return plt
+
+
+def get_stacked_bar_charts(data):
+    # Create columns optimized for bar charts
+    data['Gender'] = data['gender_Female'].replace({True: 'Female', False: 'Male'})
+    data['Partner'] = data['Partner_Yes'].replace({True: 'Yes', False: 'No'})
+    data['Dependents'] = data['Dependents_Yes'].replace({True: 'Yes', False: 'No'})
+    data['Senior Citizen'] = data['SeniorCitizen'].replace({1: 'Yes', 0: 'No'})
+
+    columns_to_plot = ['Senior Citizen', 'Gender', 'Partner', 'Dependents']
+
+    num_columns = 2
+    num_rows = 2
+
+    # create a figure
+    fig = plt.figure(figsize=(12, 5 * num_rows))
+    fig.suptitle('Churn Proportions Per Category', fontsize=22, y=.95)
+
+    # loop to each column name to create a subplot
+    for index, column in enumerate(columns_to_plot, 1):
+
+        # create a subplot
+        ax = fig.add_subplot(num_rows, num_columns, index)
+
+        # converts columns to what percentage of the total each category represents, adding up to 100%
+        prop_by_independent = pd.crosstab(data[column], data['Churn']).apply(lambda x: x / x.sum() * 100, axis=1)
+
+        prop_by_independent.plot(kind='bar', ax=ax, stacked=True, rot=0, color=['#22bb45', '#ff4c4b'])
+
+        # set the legend in the upper right corner
+        ax.legend(loc="upper right", bbox_to_anchor=(0.62, 0.5, 0.5, 0.5), title='Churn', fancybox=True)
+
+        # set title and labels
+        ax.set_title('Proportion of observations by ' + column, fontsize=16, loc='left')
+
+        ax.tick_params(rotation='auto')
+
+        # remove frame from the plot
+        spine_names = ('top', 'right', 'bottom', 'left')
+        for spine_name in spine_names:
+            ax.spines[spine_name].set_visible(False)
+
+    return fig
 
 
 def main():
     st.set_page_config(
-        page_title="Churn Prediction App",
+        page_title=" Customer Churn Prediction App",
         page_icon=":bar_chart:",
         layout="wide",
         initial_sidebar_state="expanded"
     )
 
+    with open("assets/style.css") as f:
+        st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
+
     data, data_before_encoding = get_clean_data()
 
     input_data = add_sidebar(data, data_before_encoding)
-    st.write(input_data)
+    # st.write(input_data)
 
     with st.container():
         st.title("Churn Prediction App")
-        st.write("This app uses machine learning to predict customer churn, so you can see if a customer is at high "
-                 "risk of leaving your business.")
+        st.write(
+            "This app uses machine learning technique Logistic Regression to predict customer churn, so you can see if a customer is at high "
+            "risk of leaving your business. This information provides a chance for you to take steps to prevent the customer from leaving. "
+            "Multiple graphs are shown below to help you understand the data and the prediction that comes with the inputted customer information.")
+        st.write("")
+        st.write("")
+        st.write("")
 
     col1, col2 = st.columns([4, 1])  # first column will be 4 times wider than the second column
 
     with col1:
-        radar_chart = get_radar_chart(input_data, data)
-        st.plotly_chart(radar_chart)
+        st.write("")
+        st.write("The red line represents the number of churned customers over time, while the blue line represents the number of customers who did not churn."
+                 " To see where your customer falls in the data, adjust the tenure slider.")
+        st.write("")
+        altair_chart = get_altair_chart(data, input_data)
+        st.altair_chart(altair_chart, use_container_width=True)
+
     with col2:
         add_predictions(input_data)
+        st.write("For more useful metrics, expand the graphs below 👇")
+        bar_charts = get_stacked_bar_charts(data)
+        st.pyplot(bar_charts)
+
+        correlation_matrix = get_correlation_matrix(data)
+        st.pyplot(correlation_matrix)
 
 
 if __name__ == '__main__':
