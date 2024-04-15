@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/Users/ilya1/Desktop/Learning/all school/streamlit-example/.venv/bin/python3.12" "$0" "$@"
+'''exec' "/Users/ilya1/Desktop/Learning/all school/streamlit-customer-churn/.venv/bin/python3.12" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re

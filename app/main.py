@@ -251,7 +251,6 @@ def main():
             "<span style='color:#6591e7;'>boosting business</span> revenue.", unsafe_allow_html=True)
         st.write("")
         st.write("")
-        st.write("")
         st.write("The <span style='color:#ff4c4b;'>red line</span> represents the number of churned customers over "
                  "time, while the <span style='color:#6591e7;'>blue line</span> represents the number of customers who "
                  "did not churn. To see where <span style='color:#22bb45;'>your customer</span> falls in the data, "
