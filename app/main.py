@@ -1,5 +1,4 @@
 import pickle as pickle
-
 import pandas as pd
 import streamlit as st
 from sklearn.impute import SimpleImputer
