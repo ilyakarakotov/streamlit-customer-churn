@@ -35,7 +35,7 @@ def create_model(data):
 
 
 def get_clean_data():
-    data = pd.read_csv('data/Telco-Customer-Churn.csv')
+    data = pd.read_csv('data/customer-churn.csv')
 
     # replace empty values with NaN
     data['TotalCharges'] = data['TotalCharges'].replace(' ', pd.NA)
