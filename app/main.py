@@ -1,10 +1,11 @@
 import pickle as pickle
 import pandas as pd
 import streamlit as st
-from sklearn.impute import SimpleImputer
 import altair as alt
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.impute import SimpleImputer
+
 
 
 def get_clean_data():
