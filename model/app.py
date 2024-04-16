@@ -71,15 +71,6 @@ def main():
         pickle.dump(model, file)
     with open('../model/scaler.pkl', 'wb') as file:
         pickle.dump(scaler, file)
-    # Save the train-test split data
-    with open('../model/X_train.pkl', 'wb') as file:
-        pickle.dump(X_train, file)
-    with open('../model/X_test.pkl', 'wb') as file:
-        pickle.dump(X_test, file)
-    with open('../model/y_train.pkl', 'wb') as file:
-        pickle.dump(y_train, file)
-    with open('../model/y_test.pkl', 'wb') as file:
-        pickle.dump(y_test, file)
 
 
 if __name__ == "__main__":
