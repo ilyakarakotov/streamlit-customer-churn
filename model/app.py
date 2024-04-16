@@ -16,7 +16,7 @@ def create_model(data):
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
 
-    # split the data. 79% for training, 21% for testing. Random state is random number
+    # split the data. 80% for training, 20% for testing. Random state is random number
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.20, random_state=42
     )
